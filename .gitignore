@@ -1,0 +1,7 @@
+coverage/
+dist/
+cjs/
+docs/
+lib/
+node_modules/
+.vercel

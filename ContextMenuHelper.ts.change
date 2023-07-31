@@ -1,0 +1,799 @@
+import _ from 'lodash';
+import { dataArray } from './custom-chart';
+import 'jquery';
+let ContextMenuHelper = {   
+    CONTEXT_MENU_SELECTOR: 'vitara-context-menu-target', 
+    ENUM_PROPERTY_KEY: {
+        'tooltip': 'tooltipEnable',
+        'datalabel': 'labelsEnable',
+        'legend': 'legendEnable',
+        'palette': 'seriesColors',
+        // 'catAxis': 'xAxisLabelHide',
+        // 'valAxis': 'yAxisLabelHide',
+        // 'sValAxis': 'sYAxisLabelHide'
+    },
+    ENUM_PROPERTY_LISTENERS: {
+        'labelsEnable': 'updateDataLabelState'        
+    },
+    ENUM_PROPERTY_NAME: {
+        'tooltip': 'Tooltip',
+        'datalabel': 'DataLabel',
+        'legend': 'Legend',
+        'palette': 'Color Palette',
+        'series_yAxis': 'Value Axis',
+        'series_color': 'Series Color',
+        // 'xAxisLabelHide': 'Hide Axis',
+        // 'xAxisOppSide': 'Opposite',
+        'xAxisRevDir': 'Invert Data',
+        // 'yAxisLabelHide': 'Hide Axis',
+        // 'yAxisOppSide': 'Opposite',
+        'yAxisRevDir': 'Invert Data',
+        // 'sYAxisLabelHide': 'Hide Axis',
+        // 'sYAxisOppSide': 'Opposite',
+        'sYAxisRevDir': 'Invert Data',
+        'markerEnable': 'Marker',
+        'series_marker': 'Marker',
+        'markerType': 'Marker Type',
+        'markerSize': 'Marker Size',
+        'seriesTypeWidth': 'Bar/Column Width',
+        'barColumnSpacing': 'Bar/Column Spacing',
+        'catAxis': 'Category Axis',
+        'valAxis': 'Value Axis',
+        'sValAxis': 'Secondary Value Axis',
+        'sCatAxis': 'Dynamic Width Axis',
+        'invertedAxis': 'Invert Axes'
+    },
+    ENUM_HORIZONTAL_AXIS_POSITION: {
+        0: 'Show on Top',
+        1: 'Show on Bottom'
+    },
+    ENUM_VERTICAL_AXIS_POSITION: {
+        0: 'Show on Right',
+        1: 'Show on Left'
+    },
+    ENUM_AXIS_VISIBILITY: {
+        0: 'Show Axis',
+        1: 'Hide Axis'
+    },
+    getRenderedChartType: function() {
+        // var rcInstance = this.getRenderedChartInstance ? this.getRenderedChartInstance() : null;
+        // if (rcInstance && rcInstance[0]) {
+        //     return rcInstance[0].getRenderOptions().chart.type;
+        // }
+        return 'bar';  
+    },
+    isRenderedChartInverted: function() {
+        // var rcInstance = this.getRenderedChartInstance ? this.getRenderedChartInstance() : null;
+        // if (rcInstance && rcInstance[0]) {
+        //     return +rcInstance[0].getRenderOptions().chart.inverted === 1 ? true : false;
+        // }
+        return false;  
+    },
+    getPropertyDisplayName: function(property: any) {
+        if(this.ENUM_PROPERTY_NAME[property]){
+            return this.ENUM_PROPERTY_NAME[property];
+        }
+        var chartType = this.getRenderedChartType(), inverted = this.isRenderedChartInverted();
+        var currentValue = this.getPropertyValueForContextMenu(property);
+        switch (property) {
+            case 'xAxisOppSide':
+                if(chartType === 'bar'){
+                    return this.ENUM_VERTICAL_AXIS_POSITION[+(+currentValue === 1)];
+                } else {
+                    if(inverted){
+                        return this.ENUM_VERTICAL_AXIS_POSITION[+(+currentValue === 1)];
+                    }
+                    return this.ENUM_HORIZONTAL_AXIS_POSITION[+(+currentValue === 1)];
+                }
+            case 'yAxisOppSide':
+                if (chartType === 'bar') {
+                    return this.ENUM_HORIZONTAL_AXIS_POSITION[+(+currentValue === 1)];               
+                } else {
+                    if(inverted){
+                        return this.ENUM_HORIZONTAL_AXIS_POSITION[+(+currentValue === 1)];
+                    }
+                    return this.ENUM_VERTICAL_AXIS_POSITION[+(+currentValue === 1)];
+                }
+            case 'sYAxisOppSide':
+                if (chartType === 'bar') {
+                    return this.ENUM_HORIZONTAL_AXIS_POSITION[+(+currentValue !== 1)];
+                } else {
+                    if(inverted){
+                        return this.ENUM_HORIZONTAL_AXIS_POSITION[+(+currentValue !== 1)];
+                    }
+                    return this.ENUM_VERTICAL_AXIS_POSITION[+(+currentValue !== 1)];
+                } 
+            case 'sXAxisOppSide':
+                if (chartType === 'bar') {
+                    return this.ENUM_VERTICAL_AXIS_POSITION[+(+currentValue !== 1)];
+                } else {
+                    if(inverted){
+                        return this.ENUM_VERTICAL_AXIS_POSITION[+(+currentValue !== 1)];
+                    }
+                    return this.ENUM_HORIZONTAL_AXIS_POSITION[+(+currentValue !== 1)];
+                } 
+            case 'xAxisLabelHide':
+            case 'yAxisLabelHide':
+            case 'sYAxisLabelHide':
+            case 'sXAxisLabelHide':
+                return this.ENUM_AXIS_VISIBILITY[+(+currentValue !== 1)];
+
+        }
+        return property;
+    },
+    /* isSecondaryValueAxisEnabled: function() {
+        var rcInstance = this.getRenderedChartInstance();
+        if (rcInstance && rcInstance[0]) {
+            return rcInstance[0].getRenderOptions().yAxis.length ? true : false;
+        }
+        return false;
+    }, */
+    readData: function(){
+        return dataArray;
+    },
+    // createGraphicModels: function () {
+    //     //A set to hold graphic models which you can define as a tree/array or any structure you want.        
+    //     var graphicModels: any = { children: [] };
+    //     try {
+    //         var rawData = this?.readData();
+    //         _.each(rawData, function (row: any) {
+    //             var headers = row.headers,
+    //                 values = row.values,
+    //                 value = values[0],
+    //                 //New a graphic model.
+    //                 graphicModel = new mstrmojo.customviz.GraphicModel();
+
+    //             //Set properties to the graphic model.
+    //             graphicModel.setCustomProperties({
+    //                 packageName: headers[0] ? headers[0].name: '',
+    //                 className: headers[1] ? headers[1].name: '',
+    //                 value: value.rv,
+    //                 formattedValue: value.v
+    //             });
+    //             graphicModel.idValueMapping = row.idValueMapping;
+    //             var attrSelector = {};
+    //             if(row.headers){
+    //                 _.each(row.headers, function(header) {                        
+    //                     if (attrSelector[header.attributeSelector.tid]){
+    //                         //merge attribute forms text into 'n' to match selector in the tree data
+    //                         attrSelector[header.attributeSelector.tid][0].n = attrSelector[header.attributeSelector.tid][0].n + ' ' + header.attributeSelector.n;
+    //                     } else {
+    //                         attrSelector[header.attributeSelector.tid] = [_.merge({ id: header.attributeSelector.eid, n: header.attributeSelector.n }, header.attributeSelector)];
+    //                     }
+    //                 });
+    //             }
+    //             // Set the selector of the graphic
+    //             // graphicModel.setSelector(row.metricSelector, false);
+    //             graphicModel.setSelector(attrSelector, true);
+    //             // Set the headers used in group/calculation.
+    //             graphicModel.setGroupOptions(row.headers);
+    //             // Set the selector and the action of drop zone used in drill. 
+    //             if (headers[0]){
+    //                 graphicModel.setDrillOptions(headers[0].attributeSelector, [{
+    //                     dropZoneIndex: 0,
+    //                     keepParent: false
+    //                 }]);
+    //             }
+    //             // Add the graphic model to the a set which you defined on your own.
+    //             graphicModels.children.push(graphicModel);
+
+    //         });
+
+    //     } catch (error) {
+    //         return graphicModels;
+    //     }
+    //     // Return the set of graphic models you defined
+    //     return graphicModels;
+    // },
+    // getGraphicModel: function (point) {
+    //     if (!this.getGraphicModels || !point){
+    //         return null;
+    //     }
+    //     var selector = this.getContextMenuSelector(point);
+    //     selector = !point.selector && point.selectorFunc ? point.selectorFunc() : point.selector;        
+    //     if(!selector){
+    //         return null;
+    //     }
+    //     return this.getGraphicModels().children.filter(function (model) {            
+    //         return _.isEqual(model.getSelector(), selector);
+    //     })[0];
+    // },
+    selectedPoints: <any>[],
+    getContextMenuSelector: function(point: any) {
+        var selector: any[], selected = false;
+        if (this.selectedPoints && this.selectedPoints.length > 0) {
+            selector = [];
+            _.each(this.selectedPoints, function (sPoint: any) {
+                selector.push(sPoint.selector);
+                if (!selected) {
+                    selected = _.isEqual(point.selector, sPoint.selector);
+                }
+            });            
+            if(selected){
+                if(this.selectedPoints.length === 1){
+                    return false;
+                }
+                return selector;
+            }
+            // this.resetSelectionForContextMenu();
+        }
+        return false;
+    },
+    // resetSelectionForContextMenu: function() {        
+    //     this.handlePointSelection({
+    //         target: this.getRenderedHCInstance? this.getRenderedHCInstance()[0].container: [window]
+    //     }, true);
+    // },
+    isMSTRContextMenuSupported: function() {
+        return false;//typeof this.handleContextMenuSelection === "function";
+    },
+    addContextMenu: function (chartNode: any) {
+        var self = this;
+        // if (!self.handleContextMenuSelection) {
+        //     return;
+        // }        
+        $(chartNode).off('contextmenu').on('contextmenu', function (event: any) {
+            if (event.e) {
+                event = event.e;
+            }            
+            event.stopPropagation();
+            //Get graphic model bind to the graphic.
+            // self.handleContextMenuSelection(event, self.getGraphicModel(self.getTargetDataFromEvent(event)));
+            var targetData = self.getTargetDataFromEvent(event);
+            // var graphicModel = self.getGraphicModel(targetData);
+            self.handleContextMenuSelection(event, graphicModel ? $.extend(true, {}, graphicModel, { targetData: targetData }) : graphicModel);
+        });
+    },
+    getTargetSelectorFromEvent: function(event) {
+        var element = this.getTargetElementFromEvent(event);
+        var classAttr = element.getAttribute('class');
+        if(classAttr){
+            return classAttr.split(' ');
+        }
+        return [];
+    },
+    getTargetElementFromEvent: function(event) {
+        return $(event.target).closest('.' + this.CONTEXT_MENU_SELECTOR)[0];        
+    },
+    getSeriesNameFromLegendElement: function(event) {
+        var lText = $('.vitara-legend-text', this.getTargetElementFromEvent(event));
+        if (lText && lText.length > 0) {
+            let sName = lText.text(),
+                di = this.getDataHelper();
+            return di ? di.parseMSTRText(sName): sName;
+        }
+        return '';
+    },
+    updateConfigProperties: function(config, eleClass, event) {
+        var self = this;            
+        if (config.key === 'series_marker' && eleClass.indexOf('vitara-legend-item') !== -1){
+            var seriesName = this.getSeriesNameFromLegendElement(event);
+            if (seriesName) {
+                config.currentValue = self.isMarkerEnabledOnSeries(seriesName);
+                config.onClick = function (newValue) {
+                    self.updateSeriesMarkerEnabled(newValue, seriesName);
+                };
+            }
+        } else if (config.key === 'series_yAxis' && eleClass.indexOf('vitara-legend-item') !== -1) {
+            var seriesName = this.getSeriesNameFromLegendElement(event);
+            if (seriesName) {
+                config.subMenuConfig[0].currentValue = self.getPropertyFromSeries(seriesName, 'yAxis') + '';
+                config.subMenuConfig[0].onClick = function (newValue) {
+                    self.updateSeriesProperties('yAxis', +newValue, seriesName);
+                };
+            }
+        }
+        return config;
+    },
+    setCustomMenuConfigVisibility: function (customConfig, event) {
+        if (event.target){            
+            var self = this;
+            var eleClass = this.getTargetSelectorFromEvent(event);        
+            var activeConfig = this.getConfigPropertiesForContextMenu(eleClass);
+            var disabledProps = this.getConfigPropertiesToHideForContextMenu(eleClass);
+            _.each(customConfig, function(config) {
+                if(disabledProps.indexOf(config.key) !== -1){
+                    config.isShown = false;
+                }else{
+                    if(activeConfig.indexOf(config.key) !== -1){
+                        config.isShown = true;
+                        config = self.updateConfigProperties(config, eleClass, event);
+                    }
+                    if (config.onClick) {
+                        config.onClick = config.onClick.bind(event);
+                    }
+                }
+            });
+        }
+        return customConfig;
+    },
+    getCustomMenuConfig: function(customConfig, event) {  
+        this.enableDocumentStorage && this.enableDocumentStorage();
+        return this._super(this.setCustomMenuConfigVisibility(customConfig, event), event);
+    },
+    getTargetDataFromEvent: function (event) {
+        // return event.target.point;
+        if (event.target && event.target.point) {
+            return event.target.point;
+        }
+        // find the hover point when the target doesn't have any point data
+        return this.getHoverPointFromEvent(event);
+    },
+    getHoverPointFromEvent: function (event) {
+        var hoverPoint = null;
+        if (this.getRenderedHCInstance && event.target) {
+            // get the hovered point from the chart
+            _.each(this.getRenderedHCInstance(), function (hcInstance) {
+                if (hcInstance && hcInstance.container){
+                    var hContainer = $(event.target).closest('.highcharts-container')
+                    if (hContainer && hContainer[0] && (hcInstance.container.id === hContainer[0].id)) {
+                        hoverPoint = hcInstance.hoverPoint;
+                    }
+                }
+            });
+        }
+        return hoverPoint;
+    },
+    getContextMenuConfig: function(graphicModel) {
+        var commonConfig = [
+            {
+                type: mstrmojo.DEFAULT_CONTEXT_MENU.KEEP_ONLY
+            }, {
+                type: mstrmojo.DEFAULT_CONTEXT_MENU.EXCLUDE
+            }, {
+                type: mstrmojo.DEFAULT_CONTEXT_MENU.DRILL
+            }, {
+                type: mstrmojo.DEFAULT_CONTEXT_MENU.GROUP
+            }, {
+                type: mstrmojo.DEFAULT_CONTEXT_MENU.CALCULATION
+            }, {
+                type: mstrmojo.DEFAULT_CONTEXT_MENU.SHOW_DATA
+            }, {
+                type: mstrmojo.DEFAULT_CONTEXT_MENU.GO_TO_TARGETS
+            }
+        ];
+
+        return {
+            common: commonConfig,
+            custom: this.getContextMenuCustomConfig(graphicModel)
+        };
+    },
+    setPropertyToChartState: function (property, value) {
+        if (this.propMenuPropertyState) {
+            this.propMenuPropertyState[property] = value;
+            this.updateChartSavedState(this.propMenuPropertyState);
+            this.updateVizPropertiesFromMenuState(this.propMenuPropertyState);
+            this.rePlot()
+        }
+    },
+    getPropertyValueForContextMenu: function (property) {
+        if (typeof this.getVizProps()[property] === 'undefined') {
+            return this.getPropMenuDefaults()[property] || this.getPropertyDefault(property);
+        }
+        return this.getVizProps()[property];
+    },
+    getPropertyListener: function(options, property) {
+        if(options.listener){
+            return options.listener;
+        }
+        return this.ENUM_PROPERTY_LISTENERS[property]? this[this.ENUM_PROPERTY_LISTENERS[property]].bind(this): null;
+    },
+    getPropertyDefault: function(prop) {
+        switch (prop) {
+            case 'seriesColors':
+                if (this.getRenderedChartInstance && this.getRenderedChartInstance()[0] && this.getRenderedChartInstance()[0].getColorPalette) {
+                    return this.getRenderedChartInstance()[0].getColorPalette();
+                }
+                return '';
+            case 'tooltipEnable':
+                return true;
+            case 'series_yAxis':
+                return '0';
+            default:
+                return '';
+        }        
+    },
+    openPropertyMenu: function (index) {        
+        $('.editor-popup-opener', this.domNode).trigger($.Event('click', {
+            // namespace: self.getEventNS(),
+            target: $('.editor-popup-opener', this.domNode)[0],            
+        }), index);
+    },
+    getCustomMenuItemConfig: function (options) {
+        var self = this;
+        var propertyKey = this.getPropertyKey(options.key);
+        var listener = this.getPropertyListener(options, propertyKey);
+        switch (options.type) {
+            case mstrmojo.CUSTOM_CONTEXT_MENU.TOGGLE:
+                return {
+                    isShown: options.isShown,
+                    type: mstrmojo.CUSTOM_CONTEXT_MENU.TOGGLE,
+                    name: options.name,
+                    key: options.key,
+                    currentValue: options.currentValue || (+self.getPropertyValueForContextMenu(propertyKey) === 0 ? false : true),
+                    onClick: listener ? listener : function (newValue) {                        
+                        self.setPropertyToChartState(propertyKey, newValue);
+                    },
+                };
+            case mstrmojo.CUSTOM_CONTEXT_MENU.SEPARATOR:
+                return {
+                    type: mstrmojo.CUSTOM_CONTEXT_MENU.SEPARATOR
+                };
+            case mstrmojo.CUSTOM_CONTEXT_MENU.SUBMENU:                
+                if (options.subMenuType === mstrmojo.CUSTOM_CONTEXT_MENU.MULTI_SELECT_LIST){
+                    return {
+                        isShown: options.isShown,
+                        type: mstrmojo.CUSTOM_CONTEXT_MENU.SUBMENU,
+                        name: options.name,
+                        key: options.key,
+                        subMenuConfig: options.items
+                    };                
+                }
+                return {
+                    isShown: options.isShown,
+                    type: mstrmojo.CUSTOM_CONTEXT_MENU.SUBMENU,
+                    name: options.name,
+                    key: options.key,
+                    subMenuConfig: [{
+                        type: mstrmojo.CUSTOM_CONTEXT_MENU.SINGLE_SELECT_LIST,
+                        currentValue: options.currentValue || self.getPropertyValueForContextMenu(propertyKey) || options.items[0].value,
+                        onClick: listener ? listener : function (newValue) {
+                            if (newValue === 'more') {
+                                self.openPropertyMenu();
+                            } else {
+                                self.setPropertyToChartState(propertyKey, newValue);
+                            }
+                        },
+                        items: options.items
+                    }]
+                };
+            case mstrmojo.CUSTOM_CONTEXT_MENU.NORMAL:
+                return {
+                    isShown: options.listener ? options.isShown : options.isShown && !isMSTRStatePresentation(),
+                    type: mstrmojo.CUSTOM_CONTEXT_MENU.NORMAL,
+                    name: options.name,
+                    key: options.key,
+                    onClick: options.listener ? options.listener : function () {
+                        self.openPropertyMenu(self.getTargetPropMenuFromEvent(this));
+                    },
+                }
+            default:
+                break;
+        }
+    },
+    getSubMenuConfig: function(options) {
+        
+    },
+    getTargetPropMenuFromEvent: function(event) {
+        var selector = this.getTargetSelectorFromEvent(event);
+        if(selector){
+            if (_.includes(selector, 'vitara-legend-item')) {
+                return 'legend';
+            }
+            if (_.includes(selector, 'vitara-axis')) {
+                return 'axes';
+            }
+        }
+        return 0;
+    },
+    getCustomContextMenuItems: function() {
+        return ['tooltip', 'datalabel', 'legend', 
+                'markerEnable',
+                'series_marker',
+                'xAxisLabelHide', 'xAxisOppSide',
+                'sXAxisLabelHide', 'sXAxisOppSide',
+                'yAxisLabelHide', 'yAxisOppSide',
+                'sYAxisLabelHide', 'sYAxisOppSide',
+                'invertedAxis',
+                'separator', 
+                'format',
+                'separator',
+                'catAxis', 'valAxis', 'sValAxis','sCatAxis',
+                // 'xAxisLabelHide', 'xAxisRevDir', 'xAxisOppSide',
+                // 'yAxisLabelHide', 'yAxisRevDir', 'yAxisOppSide',
+                // 'sYAxisLabelHide', 'sYAxisRevDir', 'sYAxisOppSide',
+                // 'markerType','markerSize',
+                // 'seriesTypeWidth', 'barColumnSpacing',
+                'palette', 'series_yAxis', 'series_color'];
+    },
+    getChartSpecificConfigProperties: function(selector) {
+        return [];
+    },    
+    getDefaultConfigForContextMenu: function() {
+        return ['tooltip', 'datalabel', 'legend', 'palette']
+    },
+    getConfigPropertiesForContextMenu: function(selector) {
+        var config = [];
+        if(_.includes(selector, 'vitara-point')){            
+            config = this.getDefaultConfigForContextMenu();
+        } else if (_.includes(selector, 'vitara-category-axis')){
+            config = ['xAxisLabelHide', 'xAxisOppSide'];
+        } else if (_.includes(selector, 'vitara-value-axis') || _.includes(selector, 'vitara-value-axis-0')) {
+            config = ['yAxisLabelHide', 'yAxisOppSide'];
+        } else if (_.includes(selector, 'vitara-value-axis-1')) {
+            config = ['sYAxisLabelHide', 'sYAxisOppSide'];
+        } else if (_.includes(selector, 'vitara-legend-item') || _.includes(selector, 'vitara-legend-text')) {            
+            config = ['legend', 'series_color'];            
+        } else if (_.includes(selector, 'vitara-category-axis-1')) {
+            config = ['sXAxisLabelHide', 'sXAxisOppSide'];
+        } else{
+            config = this.getDefaultConfigForContextMenu();
+        } 
+        return config.concat(this.getChartSpecificConfigProperties(selector));
+    },
+    getConfigPropertiesToHideForContextMenu: function() {
+        if(isMSTRStatePresentation()){
+            return ['format', 'series_color'];
+        }
+        return [];
+    },
+    updateDataLabelState: function(value) {
+        if (this.propMenuPropertyState) {
+            var self = this;
+            var dataLabelTypes = this.getDataLabelTypes();
+            if (!dataLabelTypes) {
+                dataLabelTypes = ['labelsMin', 'labelsMax', 'labelsFirst', 'labelsLast', 'labelsOdd', 'labelsEven'];
+            }
+            _.each(dataLabelTypes, function (property) {
+                self.propMenuPropertyState[property] = value;
+            });
+            this.propMenuPropertyState['labelsEnable'] = value;
+            this.updateChartSavedState(this.propMenuPropertyState);
+            this.updateVizPropertiesFromMenuState(this.propMenuPropertyState);
+            this.rePlot()
+        }
+    },
+    getContextMenuCustomConfig: function (graphicModel) {
+        var self = this;
+        var customConfig = [];
+        _.each(this.getCustomContextMenuItems(graphicModel), function(val) {
+            customConfig.push(self.getCustomMenuItemConfig(self.getCustomContextMenuTypes(val, graphicModel, false)));
+        });        
+        return customConfig;        
+    },
+    getGraphicModelsBySelector: function getGraphicModelsBySelector(selector, isAttrSelector) {
+        var viz = this,
+            ret = [],
+            //Get the set of graphic models.
+            graphicModels = this.getGraphicModels(),
+            //Define the rules for picking the graphic models.
+            pickOptions = {
+                attribute: mstrmojo.customviz.PICKED_TYPE.METRIC,
+                metric: mstrmojo.customviz.PICKED_TYPE.METRIC,
+                criteria: mstrmojo.customviz.PICKED_CRITERIA.INTERSECTION
+            };
+        //Iterate through the set.
+        _.each(graphicModels.children, function (graphicModel) {
+            //Check if the graphic model should be picked
+            if (viz.canPickGraphicModel(selector, isAttrSelector, graphicModel, pickOptions)) {
+                ret.push(graphicModel);
+            }
+        });
+        // Return all the graphic models picked by the given selector.
+        return ret;
+    },
+    addContextMenuToDataPoints: function() {
+        this.addContextMenuClass('.vitara-point');        
+    },
+    addContextMenuToAxisLabels: function() {
+        this.addContextMenuClass('.vitara-axis');
+    },
+    addContextMenuToLegend: function() {
+        this.addContextMenuClass('.vitara-legend-item');
+    },
+    addContextMenuToChartContainer: function() {
+        this.addContextMenuClass('.vitara-chart-container');
+    },
+    addContextMenuToDataLabels: function() {
+        this.addContextMenuClass('.vitara-datalabel');
+    },
+    addContextMenuClass: function(selector) {
+        $(selector, this.domNode).addClass(this.CONTEXT_MENU_SELECTOR);
+    },
+    processContextMenu: function () {
+        if(this.showMSTRContextMenu()){
+            this.addContextMenuToAxisLabels();
+            this.addContextMenuToDataPoints();
+            this.addContextMenuToLegend();
+            this.addContextMenuToChartContainer();
+            this.addContextMenuToDataLabels();
+            this.addContextMenu();
+        }
+    },
+    showMSTRContextMenu: function() {
+        return true;
+    },
+    getPropertyKey: function(property) {
+        return this.ENUM_PROPERTY_KEY[property] || property;
+    },
+    getSeriesNameFromGraphicModel: function(graphicModel) {
+        if(graphicModel && graphicModel.targetData){        
+            return graphicModel.targetData.series.userOptions.name;
+        }
+        return '';
+    },    
+    updateSeriesProperties: function(key, value, seriesName) {
+        var index = this.getSeriesOptionsIndexByName(seriesName);
+        if (index !== -1) {
+            var sOptions = {},
+            seriesOptions = this.getSeriesOptions();
+            sOptions[key] = value;
+            seriesOptions[index] = $.extend(true, {}, seriesOptions[index], sOptions);            
+            this.setPropertyToChartState('series', seriesOptions);
+        }
+    },
+    getSeriesOptionsIndexByName: function (name) {
+        return _.findIndex(this.getSeriesOptions(), function (options) {
+            return options.name === name;
+        });
+    },
+    isSecondaryCategoryAxisEnabled : function(){
+        return false;
+    },
+    isPrimaryValueAxisEnabled: function () {
+        var index = _.findIndex(this.getSeriesOptions(), function (options) {
+            return +options.yAxis === 0;
+        });
+        return index === -1? false: true;
+    },
+    isSecondaryValueAxisEnabled: function() {
+        var index = _.findIndex(this.getSeriesOptions(), function (options) {
+            return +options.yAxis === 1;
+        });
+        return index === -1 ? false : true;
+    },
+    getPropertyFromSeries: function(seriesName, key) {
+        var index = this.getSeriesOptionsIndexByName(seriesName);
+        if(index !== -1){
+            return this.getSeriesOptions()[index][key];
+        }
+        return false;
+    },
+    isMarkerEnabledOnSeries: function(seriesName) {
+        let markerProps = this.getPropertyFromSeries(seriesName, 'marker');
+        if(markerProps && markerProps.enabled){
+            return true;
+        }
+        return false;
+    },
+    updateSeriesMarkerEnabled: function(enabled, seriesName) {
+        let markerProps = $.extend(true, this.getPropertyFromSeries(seriesName, 'marker'), {
+            enabled: enabled
+        });
+        this.updateSeriesProperties('marker', markerProps, seriesName);
+    },
+    getCustomContextMenuTypes: function (menuType, graphicModel, isShown) {
+        var self = this;
+        switch (menuType) {
+            case 'separator':
+                return { type: mstrmojo.CUSTOM_CONTEXT_MENU.SEPARATOR };
+            case 'format':
+                return { type: mstrmojo.CUSTOM_CONTEXT_MENU.NORMAL, name: 'Format', key: menuType };
+            case 'xAxisLabelHide':
+            case 'xAxisOppSide':
+            case 'sXAxisLabelHide':
+            case 'sXAxisOppSide':
+            case 'yAxisLabelHide':
+            case 'yAxisOppSide':
+            case 'sYAxisLabelHide':
+            case 'sYAxisOppSide':
+                return { 
+                    isShown: isShown,
+                    type: mstrmojo.CUSTOM_CONTEXT_MENU.NORMAL, 
+                    name: self.getPropertyDisplayName(menuType), 
+                    key: menuType, 
+                    listener: function () {
+                        var currentValue = self.getPropertyValueForContextMenu(menuType);
+                        self.setPropertyToChartState(menuType, +currentValue === 1? 0: 1)
+                    }
+                };
+            case 'series_color':
+                return {
+                    isShown: isShown,
+                    type: mstrmojo.CUSTOM_CONTEXT_MENU.NORMAL,
+                    name: self.getPropertyDisplayName(menuType),
+                    key: menuType,
+                    listener: function () {
+                        self.openPropertyMenu('series');                        
+                    }
+                };
+            case 'palette':
+                return {
+                    isShown: isShown, type: mstrmojo.CUSTOM_CONTEXT_MENU.SUBMENU, name: self.getPropertyDisplayName(menuType), key: menuType,
+                    items: this.getSubMenuItemsForPalette()
+                }
+            case 'series_yAxis':
+                return {
+                    isShown: isShown, type: mstrmojo.CUSTOM_CONTEXT_MENU.SUBMENU, name: self.getPropertyDisplayName(menuType), key: menuType,
+                    currentValue: self.getPropertyFromSeries(self.getSeriesNameFromGraphicModel(graphicModel), 'yAxis') + '',
+                    listener: function (newValue) {
+                        self.updateSeriesProperties('yAxis', +newValue, self.getSeriesNameFromGraphicModel(graphicModel));
+                    },
+                    items: [{ name: 'Primary', value: '0' },
+                    { name: 'Secondary', value: '1' },
+                    ]
+                };
+            case 'series_marker':
+                return {
+                    isShown: isShown,
+                    type: mstrmojo.CUSTOM_CONTEXT_MENU.TOGGLE,
+                    name: self.getPropertyDisplayName(menuType),
+                    key: menuType,
+                    currentValue: self.isMarkerEnabledOnSeries(self.getSeriesNameFromGraphicModel(graphicModel)),
+                    listener: function (newValue) {
+                        let seriesName = self.getSeriesNameFromGraphicModel(graphicModel);
+                        self.updateSeriesMarkerEnabled(newValue, seriesName);                        
+                    }
+                };
+            case 'catAxis':
+            case 'valAxis':
+            case 'sValAxis':
+            case 'sCatAxis':
+                return {
+                    isShown: isShown, type: mstrmojo.CUSTOM_CONTEXT_MENU.SUBMENU, name: self.getPropertyDisplayName(menuType), key: menuType,
+                    subMenuType: mstrmojo.CUSTOM_CONTEXT_MENU.MULTI_SELECT_LIST,
+                    // key: menuType,
+                    // currentValue: self.getPropertyFromSeries(self.getSeriesNameFromGraphicModel(graphicModel), 'yAxis') + '',
+                    /* listener: function (newValue) {
+                        self.updateSeriesProperties('yAxis', +newValue, self.getSeriesNameFromGraphicModel(graphicModel));
+                    }, */
+                    items: this.getSubMenuItemsForAxis(menuType)
+                }
+            default:
+                return { isShown: isShown, type: mstrmojo.CUSTOM_CONTEXT_MENU.TOGGLE, name: self.getPropertyDisplayName(menuType), key: menuType };
+        }
+    },
+    getSubMenuItemsForAxis: function(axis) {
+        var items = [];
+        switch (axis) {
+            case 'catAxis':
+                items = ['xAxisLabelHide', 'xAxisOppSide'];
+                break;
+            case 'valAxis':
+                items = ['yAxisLabelHide', 'yAxisOppSide'];
+                break;
+            case 'sValAxis':
+                items = ['sYAxisLabelHide', 'sYAxisOppSide'];
+                break;
+            case 'sCatAxis':
+                items = ['sXAxisLabelHide', 'sXAxisOppSide'];
+                break;
+            default:
+                items = [];
+                break;
+        }
+        var self = this;
+        var customConfig = [];
+        _.each(items, function (val) {
+            customConfig.push(self.getCustomMenuItemConfig(self.getCustomContextMenuTypes(val, null, true)));
+        });
+        return customConfig;
+    },
+    getSubMenuItemsForPalette: function() {
+        let items = [{
+                name: 'Default',
+                value: 'default'
+            }, {
+                name: 'Corporate',
+                value: 'Corporate1'
+            }, {
+                name: 'Accent',
+                value: 'Accent'
+            }, {
+                name: 'Blues',
+                value: 'Blues'
+            }];
+
+        if (!isMSTRStatePresentation()){
+            items.push({
+                name: 'More',
+                value: 'more'
+            });
+        }
+        return items;
+    }    
+}
+
+export {
+    ContextMenuHelper
+};

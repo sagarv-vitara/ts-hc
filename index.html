@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TS custom chart</title>
+  </head>
+  <body>
+    <div style="width:99vw; height:95vh; position: relative;">
+      <!-- <canvas id="chart" style="display:flex;"></canvas> -->
+      <div id="chart" style="display: flex; width: 600px; height: 600px;"></div>
+      <!-- <ul id="contextMenu" style="display:none;">
+        <li class="menu-item" onclick="menuItem(1)">Keep Only</li>
+        <li class="menu-item" onclick="menuItem(2)">Exclude</li>
+      </ul> -->
+      <div class="context-menu-container">
+        <div class="context-menu">
+          <!-- <div class="group">
+            <div class="item disabled">Keep Only</div>
+            <div class="item disabled">Exclude</div>
+            <div class="item disabled">Drill</div>
+          </div>
+          <div class="group">
+            <div class="item disabled">Group</div>
+            <div class="item disabled">Calculation</div>
+          </div>
+          <div class="group">
+            <div class="item disabled">Show Data...</div>
+          </div>
+          <div class="group">
+            <div class="item">
+              <div class="icn"></div>
+              <div class="txt">Tooltip</div>
+            </div>
+            <div class="item">
+              <div class="icn"></div>
+              <div class="txt">DataLabel</div>
+            </div>
+            <div class="item">
+              <div class="icn"></div>
+              <div class="txt">Legend</div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="item">Format</div>
+          </div>
+          <div class="group">
+            <div class="item">Color Palette</div>
+            <div class="item">Value Axis</div>
+          </div> -->
+
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./custom-chart.ts"></script>
+    <style>
+      /* #contextMenu{
+  position: fixed;
+  border:1px solid #dedede;
+  background:white;
+  list-style:none;
+	border-radius: 0 6px 6px;
+	padding: 0 2px;
+}
+.menu-item {
+	font-size: 14px;
+	line-height: 24px;
+	width: 13em;
+	font-family: sans-serif;
+	padding: 4px 10px;
+	border-bottom: 1px solid #eee;
+}
+
+.menu-item:hover {
+  background: #dddddd;
+  text-decoration: underline;
+  cursor: pointer;
+} */
+.context-menu-container{
+  width: fit-content;
+  /* padding: 10px 0px; */
+  position: fixed;
+  border:1px solid #dedede;
+  border-radius: 6px;
+  color: rgb(68, 70, 73);
+  font-family: Helvetica;
+  background: rgb(244, 244, 244);
+}
+.context-menu{
+  width: fit-content;
+  background: rgb(244, 244, 244);
+}
+.group{
+  border-bottom: 1px solid rgba(68, 70, 73, 0.2);
+  
+}
+.item{
+  /* border-bottom: 1px solid #000; */
+  padding: 0px 30px 0px 24px;
+  line-height: 24px;
+  margin-top: 5px;
+  height: 24px;
+  cursor: pointer;
+}
+.item.tick::before{
+  background: transparent url("assets/dataset.svg") -575px -27px no-repeat;
+  content: "";
+  content: "";
+  width: 10px;
+  height: 24px;
+  position: absolute;
+  left: 5px;
+}
+.item.disabled{
+  color: rgba(0,0,0,0.2);
+}
+.item:not(.disabled):hover{
+  background: rgba(68,70,73,0.06);
+  color: #444649;
+}
+    </style>
+  </body>
+</html>
